@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+runs/
+*.sqlite
+*.sqlite-*
+.env
+.aws/
+.course_quota.sqlite
+dist/
+submission/*.tar.gz

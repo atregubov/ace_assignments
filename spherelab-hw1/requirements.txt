@@ -1,0 +1,2 @@
+# Offline agent, fixtures, CLI and unittest suite use Python's standard library only.
+# Optional Bedrock / LangGraph integrations: pip install -r requirements-optional.lock
