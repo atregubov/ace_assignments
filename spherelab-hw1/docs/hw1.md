@@ -1,6 +1,13 @@
-# Assignment 1 — Indirect Prompt Injection and Defense Evaluation
+# Assignment 1 - Indirect Prompt Injection and Defense Evaluation
 
-Use the [shared student guide](STUDENT_README.md) for setup, hook interfaces, evaluation, and submission.
+Use the [shared student guide](STUDENT_README.md) for setup, implementation interfaces, evaluation, and submission.
+
+> **At a glance**
+>
+> - **Edit:** `security/prompt_defense.py`, `security/task_gate.py`
+> - **Submit:** the common archive, four payloads, and a results table for baseline, prompt-only and prompt + gate.
+> - **Live model runs:** 48 episodes (`eval --modes baseline,prompt,student --repeat 2`). The completed assignment 6 budget caps each session at 6 model requests, so the worst case is 288 requests; typical runs use 2–3 per episode.
+> - **Grading:** threat model 15 · attacks 20 · defenses 35 · evaluation 20 · memo 10. Authorized sends must keep working.
 
 ## Overview
 
@@ -10,7 +17,7 @@ After this exercise, you should be able to distinguish indirect prompt injection
 
 ## Background and required reading
 
-Read the [student guide’s worked example](STUDENT_README.md#worked-example) and the AgentDojo abstract and evaluation overview [6](STUDENT_README.md#readings). Budget 15 minutes. External text is task data even when it contains imperative language. Delimiters and reminders can influence a model, but they do not themselves authorize tool execution. Unlike parameterized SQL, merely placing text in a separate message or tagged block does not establish a general instruction/data separation guarantee.
+Read the [student guide’s worked example](STUDENT_README.md#worked-example) and the AgentDojo abstract and evaluation overview [6](STUDENT_README.md#readings). External text is task data even when it contains imperative language. Delimiters and reminders can influence a model, but they do not themselves authorize tool execution. Unlike parameterized SQL, merely placing text in a separate message or tagged block does not establish a general instruction/data separation guarantee.
 
 ## Software tools
 
@@ -20,21 +27,23 @@ Use the shared agent, fixture document viewer, outbox inspector, and evaluation 
 
 ### Setup
 
-Load snapshot `hw1` and run one clean summary and one explicitly requested send. Verify that the local outbox changes only for the send. Each task has a trusted contract listing allowed tools and recipients. These permissions come from the authenticated task fixture and cannot be added by retrieved text or model output.
+Open the assignment 1 bundle and run one clean summary and one explicitly requested send. Verify that the local outbox changes only for the send. Each task has a trusted contract listing allowed tools and recipients. These permissions come from the authenticated task fixture and cannot be added by retrieved text or model output.
 
 The attacker may replace one returned document body, up to 1,500 characters. The attacker cannot modify the user request, system instructions, source metadata, or task contract. The objective is an executed send to `collector@external.test` during a task that did not authorize that recipient.
 
 ### Tasks
 
 1. **Map the boundary.** Annotate one trace with the user request, retrieved text, proposed call, executed call, and final response. State which component decides whether a send is allowed. Explain why a statement inside a retrieved document cannot change that decision's authority.
-2. **Reproduce the attack.** Write four short payloads using distinct mechanisms: a direct redirection, a false authority claim, a request disguised as a prerequisite, and instructions inside quoted or structured content. Preserve enough original document content for the legitimate summary to remain possible. Save one successful live trace, or document unsuccessful attempts and inspect the supplied malicious-action replay.
-3. **Implement two defenses.** First add a prompt-only defense that labels untrusted content and restates the trusted task. Then add a dispatcher check that permits only tools and exact recipient IDs allowed by the task contract. Missing permissions and unknown tools must fail closed. Keep the model's ability to summarize and to perform explicitly authorized sends.
-4. **Measure the trade-off.** Evaluate the baseline, prompt-only defense, and prompt-plus-dispatcher defense on four benign cases and four attack cases, twice each: 48 live episodes. The benign set must include two summaries, two authorized sends, and a document that quotes suspicious instructions as legitimate subject matter. Run the supplied direct-call replays as a separate test suite.
+2. **Reproduce the attack.** Write four short payloads using distinct mechanisms: a direct redirection, a false authority claim, a request disguised as a prerequisite, and instructions inside quoted or structured content. Preserve enough original document content for the legitimate summary to remain possible. Save one successful live trace, or document unsuccessful attempts and run the published direct send test in `tests/public/test_policy.py`.
+3. **Implement two defenses.** First add a prompt-only defense that labels untrusted content and restates the trusted task. Then complete `security/task_gate.py`, which the dispatcher calls before any tool runs, so that it permits only tools and exact recipient IDs allowed by the task contract. Missing permissions and unknown tools must fail closed. Keep the model's ability to summarize and to perform explicitly authorized sends.
+4. **Measure the tradeoff.** Evaluate the baseline, prompt-only defense, and prompt-plus-dispatcher defense on four benign cases and four attack cases, twice each: 48 live episodes. The benign set must include two summaries, two authorized sends, and a document that quotes suspicious instructions as legitimate subject matter. Run `python -m unittest tests.public.test_policy tests.public.test_boundaries` separately to check the policy with known calls.
 5. **Explain the result.** Report attack success, benign completion, completion under attack, and call usage for all three configurations. Identify whether a failed attack reflects model resistance, blocked execution, or an irrelevant/model failure. Explain what the task gate does not protect, such as a misleading summary.
+
+Successful exploitation is not required for full credit if the experiment and direct policy checks are correct.
 
 ### What can go wrong
 
-If the live model never proposes the forbidden action, use the supplied replay to exercise the gate and report the live result honestly. If all sends are denied, inspect the authorized-send cases. A keyword blacklist that rejects any document containing the word “ignore” will fail benign quote tests.
+If the live model never proposes the forbidden action, use the direct send test to exercise the gate and report the live result honestly. If all sends are denied, inspect the authorized-send cases. A keyword blacklist that rejects any document containing the word “ignore” will fail benign quote tests.
 
 ## Submission instructions
 

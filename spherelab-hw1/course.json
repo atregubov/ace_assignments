@@ -1,7 +1,7 @@
 {
   "student": true,
   "assignment": 1,
-  "version": "2.0.1",
+  "version": "1.0.2",
   "editable": [
     "security/prompt_defense.py",
     "security/task_gate.py"

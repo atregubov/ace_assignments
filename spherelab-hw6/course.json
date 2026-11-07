@@ -1,0 +1,9 @@
+{
+  "student": true,
+  "assignment": 6,
+  "version": "1.0.2",
+  "editable": [
+    "security/budget.py",
+    "security/audit.py"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "student": true,
+  "assignment": 4,
+  "version": "1.0.2",
+  "editable": [
+    "security/memory.py"
+  ]
+}

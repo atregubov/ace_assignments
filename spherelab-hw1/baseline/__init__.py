@@ -1,1 +1,1 @@
-"""Intentionally vulnerable comparison hooks. Never use outside this lab."""
+"""Intentionally vulnerable comparison implementations. Never use outside this lab."""

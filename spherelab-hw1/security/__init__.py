@@ -1,1 +1,1 @@
-"""Student-editable security hooks. See course.json and TODO comments."""
+"""Student-editable security policy implementations. See course.json and TODO comments."""

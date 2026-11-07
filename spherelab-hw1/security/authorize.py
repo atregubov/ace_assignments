@@ -1,5 +1,6 @@
-from lab.types import allow, deny
-from lab.schema import SCHEMAS
+from labagent.limits import PAYMENT_LIMIT_CENTS
+from labagent.types import allow, deny
+from labagent.utils import SCHEMAS
 
 
 def check(context, action, runtime):
@@ -11,7 +12,7 @@ def check(context, action, runtime):
     if not user or user["tenant"] != context.tenant_id:
         return deny("unknown_principal")
     if runtime.assignment == 2 and action.tool not in {"read_doc", "send_message", "propose_payment"}:
-        return deny("operation_not_enabled_in_snapshot")
+        return deny("operation_not_enabled_in_assignment")
     if action.tool not in context.allowed_tools and runtime.assignment != 1:
         return deny("task_tool_not_allowed")
     # HW2 owns the direct-read ACL. From HW3 onward, retrieval.check owns it,
@@ -34,7 +35,7 @@ def check(context, action, runtime):
             return deny("payment_authority")
         if not vendor or vendor["tenant"] != user["tenant"]:
             return deny("vendor_access")
-        if type(amount) is not int or not 0 < amount <= 50000 or action.args.get("currency") != "USD":
+        if type(amount) is not int or not 0 < amount <= PAYMENT_LIMIT_CENTS or action.args.get("currency") != "USD":
             return deny("payment_bounds")
         if action.tool == "commit_payment" and runtime.assignment < 5:
             return deny("commit_disabled")

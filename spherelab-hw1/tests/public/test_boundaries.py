@@ -1,17 +1,17 @@
-"""Direct boundary checks. Fresh student hooks intentionally fail these tests."""
+"""Direct boundary checks. The supplied vulnerable security policy implementations intentionally fail these tests."""
 from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 from pathlib import Path
 import tempfile
 import unittest
-from agent.loop import Runner
-from agent.model_adapter import MockModel
-from lab.dispatcher import Dispatcher
-from lab.evaluate import PAYMENT
-from lab.policies import ROOT, Policies
-from lab.store import Store
-from lab.types import Action, BudgetExceeded, Clock, Context, Runtime, PolicyDenied, canonical
+from labagent.runner import Runner
+from labagent.dispatcher import Dispatcher
+from labagent.evaluate import PAYMENT
+from labagent.policies import ROOT, Policies
+from labagent.store import Store
+from labagent.types import Action, BudgetExceeded, Clock, Context, Runtime, PolicyDenied
+from labagent.utils import to_canonical_json_string
 
 ASSIGNMENT=json.loads((ROOT/'course.json').read_text()).get('assignment') or int(os.environ.get('LAB_ASSIGNMENT','1'))
 MODE=os.environ.get('LAB_MODE','student')
@@ -128,8 +128,10 @@ class BoundaryTests(unittest.TestCase):
 
     @unittest.skipUnless(ASSIGNMENT==6,'assignment 6')
     def test_late_proposal_and_request_limits(self):
-        model=MockModel([{'tool':'send_message','args':{'recipient':'team-a@spherelab.test','body':'late'}}],late_at=0)
-        Runner(self.rt,self.p,model,'send').run()
+        session = Runner(self.rt, self.p, 'send')
+        self.rt.clock.advance(95)
+        with self.assertRaises(BudgetExceeded):
+            session.execute_tool(Action('send_message', {'recipient':'team-a@spherelab.test','body':'late'}))
         self.assertEqual(self.store.rows('outbox'),[])
         self.assertEqual(self.p.budget.output_limit(self.rt),512)
         self.rt.clock.value=87
@@ -147,7 +149,7 @@ class BoundaryTests(unittest.TestCase):
         self.d.execute(Action('send_message',{'recipient':'team-a@spherelab.test','body':'DUMMY_SENSITIVE_CONTENT'}))
         required={'run_id','event_id','parent_event','principal','tool','argument_digest','decision','outcome','model_attempts','tool_attempts','elapsed','stop_reason'}
         self.assertTrue(required <= self.rt.events[0].keys())
-        self.assertNotIn('DUMMY_SENSITIVE_CONTENT',canonical(self.rt.events))
+        self.assertNotIn('DUMMY_SENSITIVE_CONTENT',to_canonical_json_string(self.rt.events))
 
 
 if __name__=='__main__': unittest.main()

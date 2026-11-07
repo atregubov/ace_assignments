@@ -1,4 +1,4 @@
-from lab.types import BudgetExceeded
+from labagent.types import BudgetExceeded
 
 
 def reserve(kind, runtime):

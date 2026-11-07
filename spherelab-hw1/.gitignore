@@ -6,6 +6,5 @@ runs/
 *.sqlite-*
 .env
 .aws/
-.course_quota.sqlite
 dist/
 submission/*.tar.gz

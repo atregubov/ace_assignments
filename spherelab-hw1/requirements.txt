@@ -1,2 +1,7 @@
-# Offline agent, fixtures, CLI and unittest suite use Python's standard library only.
-# Optional Bedrock / LangGraph integrations: pip install -r requirements-optional.lock
+# Direct dependencies. The lock pins their resolved versions.
+-c requirements.lock
+openai
+openai-agents
+mcp
+# httpx2 is the Pydantic-maintained HTTP client used by openai>=3; [socks] adds SOCKS proxy support.
+httpx2[socks]

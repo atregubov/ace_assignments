@@ -1,4 +1,6 @@
-from lab.types import allow, deny, digest, payment_binding
+from labagent.limits import PAYMENT_LIMIT_CENTS
+from labagent.types import allow, deny, payment_binding
+from labagent.utils import to_hash_string
 
 
 def check(context, action, runtime, approval, receipt):
@@ -13,7 +15,7 @@ def check(context, action, runtime, approval, receipt):
         return deny("task_tool_not_allowed")
     if not account or not vendor or account["tenant"] != context.tenant_id or vendor["tenant"] != context.tenant_id:
         return deny("payment_resource_scope")
-    if type(amount) is not int or not 0 < amount <= 50000 or action.args.get("currency") != "USD":
+    if type(amount) is not int or not 0 < amount <= PAYMENT_LIMIT_CENTS or action.args.get("currency") != "USD":
         return deny("payment_bounds")
     if not doc or doc["tenant"] != context.tenant_id or doc["project"] not in user["projects"]:
         return deny("payment_document_scope")
@@ -24,10 +26,10 @@ def check(context, action, runtime, approval, receipt):
         return allow("idempotent_receipt") if receipt["binding"] == binding else deny("operation_changed")
     if not approval or not approval.get("approved") or not approval.get("nonce"):
         return deny("approval_missing_or_rejected")
-    now = getattr(runtime, "approval_now", runtime.clock.now)()
+    now = (runtime.approval_now or runtime.clock.now)()
     if approval["used"] or approval["expires"] <= now:
         return deny("approval_used_or_expired")
-    if approval["binding"] != binding or approval["digest"] != digest(binding):
+    if approval["binding"] != binding or approval["digest"] != to_hash_string(binding):
         return deny("approval_action_mismatch")
     return allow()
 

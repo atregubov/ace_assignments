@@ -12,11 +12,11 @@ ROOT=Path(__file__).resolve().parents[1]
 
 def main():
     p=argparse.ArgumentParser()
-    p.add_argument('--results',type=Path,required=True,help='Batch directory printed by lab eval')
+    p.add_argument('--results',type=Path,required=True,help='Batch directory printed by labagent eval')
     p.add_argument('--output',type=Path)
     args=p.parse_args()
     config=json.loads((ROOT/'course.json').read_text())
-    if not config['student']: p.error('Run the packager in an exported student snapshot')
+    if not config['student']: p.error('Run the packager in an exported student bundle')
     manifest=json.loads((ROOT/'.starter/manifest.json').read_text())
     for relative,expected in manifest.items():
         f=ROOT/relative
@@ -26,7 +26,7 @@ def main():
     patches=[]
     for relative in config['editable']:
         file=ROOT/relative
-        if file.is_symlink() or not file.is_file(): p.error('Missing or symlinked hook: '+relative)
+        if file.is_symlink() or not file.is_file(): p.error('Missing or symlinked implementation: '+relative)
         old=(ROOT/'.starter'/relative).read_text().splitlines(keepends=True)
         new=file.read_text().splitlines(keepends=True)
         patches.extend(difflib.unified_diff(old,new,fromfile='a/'+relative,tofile='b/'+relative))

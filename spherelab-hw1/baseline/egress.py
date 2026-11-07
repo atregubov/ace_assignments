@@ -1,4 +1,4 @@
-from lab.types import allow
+from labagent.types import allow
 
 
 def check(context, action, runtime):

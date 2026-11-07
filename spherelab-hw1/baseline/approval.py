@@ -1,4 +1,4 @@
-from lab.types import PolicyDenied
+from labagent.types import PolicyDenied
 
 
 def commit(context, action, runtime):
