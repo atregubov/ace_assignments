@@ -6,7 +6,7 @@ Use the [shared student guide](STUDENT_README.md) for setup, implementation inte
 >
 > - **Edit:** `security/authorize.py`
 > - **Submit:** the common archive, your policy, all deterministic test results, and one allow and one deny trace.
-> - **Live model runs:** 12 episodes (`eval --modes baseline,student`). The completed assignment 6 budget caps each session at 6 model requests, so the worst case is 72 requests.
+> - **Model runs:** 12 [trials](STUDENT_README.md#trials-sessions-and-model-requests) (`eval --modes baseline,student`). The completed assignment 6 budget caps each session at 6 model requests, so the worst case is 72 requests.
 > - **Grading:** threat model 15 · policy and complete mediation 45 · adversarial tests 25 · live comparison and memo 15. Deny-all gets no functionality credit.
 
 ## Overview
@@ -43,7 +43,7 @@ Only `read_doc`, `send_message`, and `propose_payment` are enabled in this bundl
 1. **Find the authority error.** Reproduce one cross-project read and one forged-role request on the vulnerable bundle. Trace whether `user_id`, `tenant_id`, or `role` is being accepted from model arguments. Record the observed document access or state change.
 2. **Implement the monitor.** Complete `check(context, action, runtime)` in `security/authorize.py`. Use the trusted context and resource registry. Treat any identity fields inside model arguments as invalid rather than as authority. Validate types and bounds, including booleans accidentally accepted as integers. Return a structured allow/deny decision with a reason code. The dispatcher (`labagent/dispatcher.py`, not editable) calls it immediately before every tool execution, including retried calls; confirm this from the code and a test, and report any path that would bypass it.
 3. **Build adversarial tests.** Add four regression cases to the six supplied scenario cases and the direct boundary checks. Together, cover a legitimate read and send, unauthorized project, other tenant, role spoofing, unknown tool, missing context, out-of-range amount, and a permission revoked before execution. Test a syntactically valid but unauthorized action. Assert that a denial produces no tool side effect.
-4. **Exercise the live agent.** Run three benign and three attack tasks on baseline and patched versions: 12 live episodes. Compare proposed actions with executed actions. Submit every forbidden action to the dispatcher in a direct test; the policy must still hold when the model is assumed to be fully misled.
+4. **Exercise the live agent.** Run three benign and three attack tasks on baseline and patched versions: 12 trials. Compare proposed actions with executed actions. Submit every forbidden action to the dispatcher in a direct test; the policy must still hold when the model is assumed to be fully misled.
 5. **Write the memo.** Describe the complete-mediation boundary and its assumptions. Explain why prompts, tool descriptions, and an LLM-based permission classifier are insufficient substitutes for this policy check. Identify one route around the monitor that must remain unavailable in deployment.
 
 ### What can go wrong

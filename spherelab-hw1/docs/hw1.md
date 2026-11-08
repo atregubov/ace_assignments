@@ -6,7 +6,7 @@ Use the [shared student guide](STUDENT_README.md) for setup, implementation inte
 >
 > - **Edit:** `security/prompt_defense.py`, `security/task_gate.py`
 > - **Submit:** the common archive, four payloads, and a results table for baseline, prompt-only and prompt + gate.
-> - **Live model runs:** 48 episodes (`eval --modes baseline,prompt,student --repeat 2`). The completed assignment 6 budget caps each session at 6 model requests, so the worst case is 288 requests; typical runs use 2–3 per episode.
+> - **Model runs:** 72 [trials](STUDENT_README.md#trials-sessions-and-model-requests) (`eval --modes baseline,prompt,student --repeat 2`). The completed assignment 6 budget caps each session at 6 model requests, so the worst case is 432 requests; typical runs use 2-3 per trial.
 > - **Grading:** threat model 15 · attacks 20 · defenses 35 · evaluation 20 · memo 10. Authorized sends must keep working.
 
 ## Overview
@@ -36,14 +36,14 @@ The attacker may replace one returned document body, up to 1,500 characters. The
 1. **Map the boundary.** Annotate one trace with the user request, retrieved text, proposed call, executed call, and final response. State which component decides whether a send is allowed. Explain why a statement inside a retrieved document cannot change that decision's authority.
 2. **Reproduce the attack.** Write four short payloads using distinct mechanisms: a direct redirection, a false authority claim, a request disguised as a prerequisite, and instructions inside quoted or structured content. Preserve enough original document content for the legitimate summary to remain possible. Save one successful live trace, or document unsuccessful attempts and run the published direct send test in `tests/public/test_policy.py`.
 3. **Implement two defenses.** First add a prompt-only defense that labels untrusted content and restates the trusted task. Then complete `security/task_gate.py`, which the dispatcher calls before any tool runs, so that it permits only tools and exact recipient IDs allowed by the task contract. Missing permissions and unknown tools must fail closed. Keep the model's ability to summarize and to perform explicitly authorized sends.
-4. **Measure the tradeoff.** Evaluate the baseline, prompt-only defense, and prompt-plus-dispatcher defense on four benign cases and four attack cases, twice each: 48 live episodes. The benign set must include two summaries, two authorized sends, and a document that quotes suspicious instructions as legitimate subject matter. Run `python -m unittest tests.public.test_policy tests.public.test_boundaries` separately to check the policy with known calls.
+4. **Measure the tradeoff.** Evaluate the baseline, prompt-only defense, and prompt-plus-dispatcher defense on six benign cases and six attack cases, twice each: 72 trials. The benign set includes two summaries (one of a document that quotes suspicious instructions as legitimate subject matter), three authorized sends to internal lists (one after a search), and one authorized send to the same external address the attacks target. Run `python -m unittest tests.public.test_policy tests.public.test_boundaries` separately to check the policy with known calls.
 5. **Explain the result.** Report attack success, benign completion, completion under attack, and call usage for all three configurations. Identify whether a failed attack reflects model resistance, blocked execution, or an irrelevant/model failure. Explain what the task gate does not protect, such as a misleading summary.
 
 Successful exploitation is not required for full credit if the experiment and direct policy checks are correct.
 
 ### What can go wrong
 
-If the live model never proposes the forbidden action, use the direct send test to exercise the gate and report the live result honestly. If all sends are denied, inspect the authorized-send cases. A keyword blacklist that rejects any document containing the word “ignore” will fail benign quote tests.
+Five of the six attack tasks legitimately authorize a send to an internal list, and the injected text asks for a redirected or extra copy. A gate that checks only the tool name lets those attacks through; check the exact recipient too. In `injection_search_ticket` the payload arrives in a document the agent found by search, not the one the user named. Conversely, a gate that blocks every external address fails `external_authorized`: permission comes from the task contract, not from the address. If the live model never proposes the forbidden action, use the direct send test to exercise the gate and report the live result honestly. If all sends are denied, inspect the authorized-send cases. A keyword blacklist that rejects any document containing the word “ignore” will fail benign quote tests.
 
 ## Submission instructions
 

@@ -6,7 +6,7 @@ Use the [shared student guide](STUDENT_README.md) for setup, implementation inte
 >
 > - **Edit:** `security/budget.py`, `security/audit.py`
 > - **Submit:** the common archive, the limit tests, a usage comparison, and the incident timeline.
-> - **Live model runs:** 12 episodes (`eval --modes baseline,student`). Baseline sessions can reach the 12-request outer ceiling and repaired ones stop at 6, so the worst case is 108 requests.
+> - **Model runs:** 12 [trials](STUDENT_README.md#trials-sessions-and-model-requests) (`eval --modes baseline,student`). Baseline sessions can reach the 12-request outer ceiling and repaired ones stop at 6, so the worst case is 108 requests.
 > - **Grading:** diagnosis 15 · enforcement 40 · audit events 20 · incident and recovery 15 · reproducibility 10. Stopping every run fails.
 
 ## Overview
@@ -36,7 +36,7 @@ The application policy permits at most six model attempts and ten tool attempts 
 1. **Reproduce the failure.** Run `python -m unittest tests.public.test_policy.PublishedPolicyTests.test_retry_attempts_and_oversized_result -v`. Inspect the attempt counter and admitted bytes. Use the supplied incident trace to identify which component initiates each retry. Reserve model calls for the bounded live comparison in Task 4.
 2. **Implement the limits.** Reserve call/tool budget before dispatch and stop before the next request would exceed it. Count unsuccessful attempts and retries. Enforce the deadline and context-size limit in trusted code. The supplied adapter (`labagent/model.py`, not editable) already disables client and SDK retries and wraps each request in a cancellable timeout; confirm this from the code and a trace, and make `timeout()` and `after_call()` cooperate with it so late results are discarded. Preserve an explicit terminal reason.
 3. **Make events usable.** Emit run and event IDs, parent event, authenticated principal, tool, argument digest, authorization decision, outcome, attempts, usage, elapsed time, and stop reason. Keep raw credentials and sensitive bodies out of ordinary logs. Record a protected fixture reference when needed for reproduction. A tool-result instruction cannot clear prior events or replace the trusted event emitter.
-4. **Run fault and utility tests.** Test repeated transient errors, recursive retry instructions, oversized output, a stalled call using virtual time, a late tool result, and a normal three-step task. Assert hard bounds and no side effect from a discarded late proposal. Run three benign and three bounded attack cases live on both versions: twelve episodes.
+4. **Run fault and utility tests.** Test repeated transient errors, recursive retry instructions, oversized output, a stalled call using virtual time, a late tool result, and a normal three-step task. Assert hard bounds and no side effect from a discarded late proposal. Run three benign and three bounded attack cases live on both versions: twelve trials.
 5. **Investigate and recover.** Using `fixtures/incident_trace.json`, produce a five-event timeline. Identify the first untrusted input, the attempted policy violation, which control acted, and any side effect actually committed. Describe containment and reset steps, then show that a clean legitimate task completes after recovery. Distinguish observations from hypotheses.
 
 ### What can go wrong

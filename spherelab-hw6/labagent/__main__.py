@@ -31,7 +31,7 @@ def add_model_options(parser):
     parser.add_argument("--model", "--model-id", dest="model_id", help="Provider model ID (OPENAI_MODEL)")
     parser.add_argument("--base-url", help="Chat Completions API root, including any /v1 prefix (OPENAI_BASE_URL)")
     parser.add_argument("--api-key", help="Provider API key (prefer the OPENAI_API_KEY environment variable)")
-    parser.add_argument("--temperature", default="0", help="Sampling temperature (0–2), or default to omit it")
+    parser.add_argument("--temperature", default="0", help="Sampling temperature (0-2), or default to omit it")
     parser.add_argument("--token-limit-field", choices=("max_tokens", "max_completion_tokens"), default="max_tokens",
                         help="Output-cap parameter accepted by your Chat Completions endpoint")
 

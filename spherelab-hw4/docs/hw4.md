@@ -6,7 +6,7 @@ Use the [shared student guide](STUDENT_README.md) for setup, implementation inte
 >
 > - **Edit:** `security/memory.py`
 > - **Submit:** the common archive, session A and B traces, memory snapshots before and after repair, and a recovery procedure.
-> - **Live model runs:** 12 two-session episodes, i.e. 24 sessions (`eval --modes baseline,student`). The completed assignment 6 budget caps each session at 6 model requests, so the worst case is 144 requests.
+> - **Model runs:** 12 two-session [trials](STUDENT_README.md#trials-sessions-and-model-requests), i.e. 24 sessions (`eval --modes baseline,student`). The completed assignment 6 budget caps each session at 6 model requests, so the worst case is 144 requests.
 > - **Grading:** persistence demo 20 · admission and retrieval 40 · two-session tests 25 · recovery and memo 15. Confirmed memory must keep working.
 
 ## Overview
@@ -38,7 +38,7 @@ The attacker objective is activation or trusted retrieval of a forbidden prefere
 1. **Demonstrate persistence.** Plant a preference-changing instruction in a document, run session A, then remove the document and start session B. Inspect stored and active memory. If the live model does not extract the candidate, run the published direct memory test and label its result as a policy check.
 2. **Design the admission rules.** Write the allowed preference schema and activation rule. Each record must bind tenant, user, key, value, origin, source identifier, confirmation identifier, and schema version. Assign origin from the trusted ingestion path. Reject an item's self-description as “user approved.”
 3. **Implement admission and retrieval.** Validate candidate types and permissible values. Require a matching confirmation for activation. Recheck user/tenant scope and schema version when retrieving memory, including legacy rows. Keep external content in an untrusted data field rather than concatenating it into a system instruction. Use the supplied quarantine mechanism for invalid records.
-4. **Test two-session behavior.** Run two benign and four adversarial two-session cases on both versions: 24 live session episodes. Cover a confirmed style preference, a confirmed valid recipient, an unconfirmed extracted preference, forged approval text, another user's record, and an invalid legacy record. Also run the deterministic admission tests. Show that a legitimate preference survives a restart.
+4. **Test two-session behavior.** Run two benign and four adversarial two-session cases on both versions: 12 trials, 24 sessions. Cover a confirmed style preference, a confirmed valid recipient, an unconfirmed extracted preference, forged approval text, another user's record, and an invalid legacy record. Also run the deterministic admission tests. Show that a legitimate preference survives a restart.
 5. **Recover and explain.** Quarantine the poisoned record with `python -m labagent quarantine`, and rerun session B. The harness rechecks memory on every recall and keeps no derived cache; note what a production system would also have to invalidate. Write a short recovery procedure that identifies affected records without deleting every user's memory. Explain why downstream authorization is still necessary after this repair.
 
 ### What can go wrong

@@ -21,7 +21,7 @@ def session_inputs(case):
     """Keep authenticated user/task overrides from current or older custom cases."""
     sessions = case.get("sessions")
     if not isinstance(sessions, list) or not 1 <= len(sessions) <= 4:
-        raise ValueError("A case must contain 1–4 sessions")
+        raise ValueError("A case must contain 1-4 sessions")
     result = []
     for session in sessions:
         if not isinstance(session, dict):
