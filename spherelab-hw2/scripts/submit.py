@@ -5,9 +5,52 @@ import difflib
 import hashlib
 import io
 import json
+import re
 import tarfile
 
 ROOT=Path(__file__).resolve().parents[1]
+MEMO_WORD_LIMIT=500
+# (heading, guidance) for each required section of submission/report.md, in order.
+REPORT_SECTIONS=[
+    ('## 1. Attack walkthrough',
+     'Starting state, attacker-controlled input, numbered steps, and the observed effect. '
+     'Cite trace files and event numbers.'),
+    ('## 2. Security memo (at most 500 words)',
+     'The security property, the control you implemented, before/after evidence, the cost to '
+     'legitimate use, and a remaining limitation. Answer the memo questions in your handout.'),
+    ('## 3. Reproduction',
+     'Baseline code revision, exact commands, model ID, endpoint, temperature and other model '
+     'settings, repetitions, and Python version. Disclose borrowed code and coding assistance. '
+     'Never include an API key: write "set OPENAI_API_KEY" instead.'),
+]
+
+
+def report_template(assignment):
+    """The empty report written into every student package."""
+    parts=[f'# Assignment {assignment} report\n']
+    for heading,guidance in REPORT_SECTIONS:
+        parts.append(f'{heading}\n\n<!-- {guidance} -->\n')
+    return '\n'.join(parts)
+
+
+def report_problems(text):
+    """Return a list of problems with a filled-in report; empty if it can be submitted."""
+    text=re.sub(r'<!--.*?-->','',text,flags=re.S)
+    positions=[text.find(heading) for heading,_ in REPORT_SECTIONS]
+    if -1 in positions:
+        missing=[h for (h,_),pos in zip(REPORT_SECTIONS,positions) if pos==-1]
+        return ['missing heading '+repr(h) for h in missing]
+    if positions!=sorted(positions):
+        return ['keep the section headings in their original order']
+    problems=[]
+    ends=positions[1:]+[len(text)]
+    for (heading,_),start,end in zip(REPORT_SECTIONS,positions,ends):
+        body=text[start+len(heading):end]
+        if not body.strip():
+            problems.append('empty section '+repr(heading))
+        if heading.startswith('## 2.') and len(body.split())>MEMO_WORD_LIMIT:
+            problems.append(f'the security memo has {len(body.split())} words; the limit is {MEMO_WORD_LIMIT}')
+    return problems
 
 
 def main():
@@ -38,10 +81,11 @@ def main():
         patches.extend(difflib.unified_diff([],file.read_text().splitlines(keepends=True),fromfile='/dev/null',tofile='b/'+rel))
         entries['source/'+rel]=file.read_bytes()
     entries['patch.diff']=''.join(patches).encode()
-    for name in ['memo.md','exploit.md','README.md']:
-        file=ROOT/'submission'/name
-        if not file.is_file() or file.is_symlink(): p.error('Missing submission/'+name)
-        entries[name]=file.read_bytes()
+    report=ROOT/'submission'/'report.md'
+    if not report.is_file() or report.is_symlink(): p.error('Missing submission/report.md')
+    problems=report_problems(report.read_text())
+    if problems: p.error('submission/report.md: '+'; '.join(problems))
+    entries['report.md']=report.read_bytes()
     for name in ['results.jsonl','summary.csv']:
         file=args.results/name
         if not file.is_file() or file.is_symlink(): p.error('Missing '+str(file))

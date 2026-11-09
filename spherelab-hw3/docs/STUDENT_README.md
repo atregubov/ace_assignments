@@ -43,7 +43,7 @@ Use `run --case CASE_ID` for one case. With `eval` or `grade`, `--modes baseline
 | `inputs/`, `attacks/` | Inspect the synthetic world and the cases, including the injected documents in attack cases' `overrides`. Put your own copied attack cases in `attacks/`. Create this directory when adding your first case if needed. |
 | `tests/` and `tests/public/` | `test_smoke.py` checks startup and adapter behavior. `test_policy.py` calls the tools directly and checks their effects in SQLite. `test_boundaries.py` exercises controls directly with proposed actions. Add your tests as `tests/public/test_student_*.py`, starting from a copy of `tests/public/template_student_test.py`. |
 | `runs/` | Each evaluation creates a batch here by default. Use its traces and database to distinguish a proposed action from a committed effect. |
-| `submission/`, `scripts/submit.py`, `.starter/` | Write your memo, walkthrough, and reproduction instructions in `submission/`. The packager compares your implementations with the originals in `.starter/security/` and checks the hashes of the supplied scaffold. |
+| `submission/`, `scripts/submit.py`, `.starter/` | Write your report in `submission/report.md`. The packager compares your implementations with the originals in `.starter/security/` and checks the hashes of the supplied scaffold. |
 | `requirements.txt` and `requirements.lock` | Install the pinned OpenAI client, Agents SDK, and MCP tool types with `pip install -r requirements.txt`. |
 
 In the instructor bundle, `dist/` holds the six student ZIPs, `reference/` holds completed policies, and `tests/instructor/` exercises those policies. `scripts/export_assignments.py` builds the packages and `scripts/verify_exports.py` checks them.
@@ -284,7 +284,7 @@ An API key is a password that spends your money. Anyone who has it can run reque
 
 - **Never share it.** Do not send it by email, chat, Slack, or the course forum, and do not show it in screenshots or recordings. Instructors and TAs never need your key.
 - **Never commit it.** Do not write it into source code, case files, `attacks/`, notebooks, or any file tracked by Git, and never push it to GitHub. Public repositories are scanned for keys within minutes. If you keep it in a file, use `.env` (already listed in `.gitignore`) and load it with `set -a; source .env; set +a`.
-- **Never submit it.** It must not appear in `submission/`, your memo, `exploit.md`, or your reproduction instructions; write "set `OPENAI_API_KEY` to your key" instead. `scripts/submit.py` skips environment files, but you are responsible for everything else you add. The harness records the endpoint and model ID in traces, never the key.
+- **Never submit it.** It must not appear anywhere in `submission/`, including `report.md`; write "set `OPENAI_API_KEY` to your key" instead. `scripts/submit.py` skips environment files, but you are responsible for everything else you add. The harness records the endpoint and model ID in traces, never the key.
 - **Avoid `--api-key` on the command line.** It ends up in shell history and is visible in the process list; use the environment variable.
 - **If a key leaks, revoke it immediately:** delete or deactivate it in the Bedrock console under **API keys**, then generate a new one. For a short-term key, sign out of the console session that generated it.
 - **Clean up at the end of the course:** delete long-term keys you no longer need.
@@ -308,14 +308,19 @@ python3 -m labagent inspect --state manual.sqlite --table audit
 
 1. Implement the implementations listed in `course.json`. Add your own regression tests in `tests/public/test_student_*.py`. Run `python3 -m unittest discover -s tests/public -v` and `python3 -m labagent grade`.
 2. Run the comparison required by your handout. Collect compared modes in the same batch. Report direct policy checks separately from measured model behavior. Use the exact batch path printed by the CLI when packaging.
-3. Fill in `submission/exploit.md` with the starting state, attacker-controlled field, steps, and observed effect. In `submission/memo.md` use at most 500 words to explain the security property, control, before/after evidence, utility cost, and a remaining limitation. In `submission/README.md` record the baseline code revision, commands, environment, model settings, and repetitions. Disclose borrowed code and coding assistance.
+3. Fill in the three fixed sections of `submission/report.md`. Keep the headings and their order; the comment under each heading says what belongs there.
+   - **1. Attack walkthrough:** the starting state, attacker-controlled field, numbered steps, and observed effect, citing trace files and event numbers.
+   - **2. Security memo (at most 500 words):** the security property, your control, before/after evidence, utility cost, and a remaining limitation. Answer the memo questions in your handout here.
+   - **3. Reproduction:** the baseline code revision, exact commands, environment, model settings, and repetitions. Disclose borrowed code and coding assistance.
+
+   The packager refuses a report with a missing, reordered, or empty section, or a memo over 500 words. HTML comments (`<!-- ... -->`) are ignored in these checks.
 4. Run the packager from the student package root, using the batch directory printed by the CLI. In the example, replace `BATCH` with that name.
 
    ```bash
    python3 scripts/submit.py --results runs/BATCH
    ```
 
-The output is `submission/hwN.tar.gz`. It includes `patch.diff`, edited implementations and added tests/attack JSON under `source/`, the three Markdown write-ups, `results.jsonl`, `summary.csv`, per-trial JSON evidence under `traces/`, and a submission manifest. The packager accepts one results batch per invocation and checks the supplied scaffold against `.starter/manifest.json`. Keep your raw SQLite files locally for inspection. Extract `patch.diff` from the submission archive. From a clean copy of the same student ZIP, run `git apply --check PATH_TO_PATCH` to verify that it applies.
+The output is `submission/hwN.tar.gz`. It includes `patch.diff`, edited implementations and added tests/attack JSON under `source/`, `report.md`, `results.jsonl`, `summary.csv`, per-trial JSON evidence under `traces/`, and a submission manifest. The packager accepts one results batch per invocation and checks the supplied scaffold against `.starter/manifest.json`. Keep your raw SQLite files locally for inspection. Extract `patch.diff` from the submission archive. From a clean copy of the same student ZIP, run `git apply --check PATH_TO_PATCH` to verify that it applies.
 
 ## Readings
 
