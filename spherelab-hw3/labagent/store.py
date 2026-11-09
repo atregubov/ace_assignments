@@ -41,9 +41,9 @@ class Store:
             db.close()
 
     def seed(self):
-        fixture = json.loads((ROOT / "fixtures/world.json").read_text())
+        world = json.loads((ROOT / "inputs/world.json").read_text())
         with self.connect() as db:
-            for kind, rows in fixture.items():
+            for kind, rows in world.items():
                 for row in rows:
                     db.execute("INSERT OR REPLACE INTO objects VALUES(?,?,?)",
                                (kind, row["id"], to_canonical_json_string(row)))

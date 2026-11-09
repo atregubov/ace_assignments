@@ -57,8 +57,8 @@ def validate(action):
 
 def tool_specs():
     descriptions = {
-        "search_docs": "Search fixture documents and return authorized snippets.",
-        "read_doc": "Read a fixture document by its ID.",
+        "search_docs": "Search lab documents and return authorized snippets.",
+        "read_doc": "Read a lab document by its ID.",
         "send_message": "Record a message in the LOCAL simulated outbox. No real mail.",
         "propose_payment": "Create a simulated payment proposal for a human reviewer.",
         "commit_payment": "Commit a previously approved simulated payment.",

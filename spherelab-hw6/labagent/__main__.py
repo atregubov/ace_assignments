@@ -40,7 +40,7 @@ def build_parser(default_assignment):
     assignment_option = dict(type=int, choices=range(1, 7), default=default_assignment,
                              help="Select an assignment by number (default: %(default)s).")
     parser = argparse.ArgumentParser(prog="python -m labagent",
-                                     description="Spherelab OpenAI agent security lab with local fixture tools")
+                                     description="Spherelab OpenAI agent security lab with local simulated tools")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("list", help="List the cases for an assignment")
@@ -186,10 +186,10 @@ def open_store(args, parser):
 
 
 def operator_context(store, user_id, parser, tools=(), recipients=()):
-    """Build the trusted context for a fixture user named on the command line."""
+    """Build the trusted context for a lab user named on the command line."""
     user = store.get("users", user_id)
     if not user:
-        parser.error("Unknown fixture user")
+        parser.error("Unknown lab user")
     return user, Context(user["id"], user["tenant"], "manual", tuple(tools), tuple(recipients))
 
 
@@ -221,7 +221,7 @@ def cmd_review(args, parser):
     proposal = store.row("proposals", args.proposal)
     if (not proposal or proposal["user_id"] != ctx.user_id or proposal["tenant_id"] != ctx.tenant_id
             or "finance" not in user["roles"]):
-        parser.error("Proposal is not reviewable by this fixture user")
+        parser.error("Proposal is not reviewable by this lab user")
     doc = store.get("docs", proposal["args"].get("document_id"))
     print(json.dumps({"proposal": proposal, "document_being_approved": doc}, indent=2))
     if args.approve:

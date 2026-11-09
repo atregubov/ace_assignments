@@ -10,7 +10,7 @@ observe(doc, runtime) -> None
     the egress policy needs in ``runtime.internal_projects``, a set that lasts for the whole
     run. A natural element is a ``(tenant, project)`` tuple.
 
-    context  Trusted ``Context`` from the case fixture or operator CLI: ``user_id``, ``tenant_id``,
+    context  Trusted ``Context`` from the case definition or operator CLI: ``user_id``, ``tenant_id``,
              ``task_id``, ``allowed_tools`` and ``allowed_recipients``. Can be ``None`` in tests.
     runtime  ``Runtime`` for this session: ``runtime.store`` (authoritative SQLite lookups),
              ``runtime.assignment``, counters, ``runtime.clock`` and ``runtime.events``.
@@ -20,7 +20,7 @@ Trusted lookups: ``runtime.store.get(kind, id)`` returns a dict or ``None``.
     docs        {"id", "tenant", "project", "label": "PUBLIC"|"INTERNAL", "title", "body", "version"}
     recipients  {"id", "tenant", "projects": [...], "external": bool}
     accounts    {"id", "tenant"}          vendors  {"id", "tenant"}
-See fixtures/world.json for every record.
+See inputs/world.json for every record.
 Labels and ACL fields come only from the store; an attacker can rewrite a public body but
 not its ``label``, ``tenant`` or ``project``.
 

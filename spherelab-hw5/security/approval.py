@@ -5,7 +5,7 @@ commit(context, action, runtime) -> receipt dict
     receipt, or raise ``PolicyDenied(reason)`` to refuse. ``action.args`` holds the payment
     fields plus ``approval_id``.
 
-    context  Trusted ``Context`` from the case fixture or operator CLI: ``user_id``, ``tenant_id``,
+    context  Trusted ``Context`` from the case definition or operator CLI: ``user_id``, ``tenant_id``,
              ``task_id``, ``allowed_tools`` and ``allowed_recipients``. Can be ``None`` in tests.
     action   Untrusted ``Action`` proposed by the model: ``action.tool`` (str) and ``action.args``
              (dict, already schema-checked). Treat every argument as attacker-controlled.

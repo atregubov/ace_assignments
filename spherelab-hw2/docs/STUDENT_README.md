@@ -2,7 +2,7 @@
 
 Start with the assignment handout linked from your [package README](../README.md). It gives you the attacker's capabilities, the policy to implement, the required experiments, and the grading rubric. This guide explains how to run those experiments and find the evidence for your answers. Run all commands from the directory containing `course.json`.
 
-[First run](#first-run) · [Package map](#package-map) · [Harness modules](#harness-modules) · [Fixtures and case inputs](#fixtures-and-case-inputs) · [Worked example](#worked-example) · [Security policy implementations](#security-policy-implementations) · [Outputs and evaluation](#outputs-and-evaluation) · [Live models and limits](#live-models-and-limits) · [Manual sessions](#manual-sessions) · [Submission](#submission) · [Readings](#readings)
+[First run](#first-run) · [Package map](#package-map) · [Harness modules](#harness-modules) · [Inputs](#inputs) · [Worked example](#worked-example) · [Security policy implementations](#security-policy-implementations) · [Outputs and evaluation](#outputs-and-evaluation) · [Live models and limits](#live-models-and-limits) · [Optional Amazon Bedrock](#optional-amazon-bedrock-for-llm-access) · [Manual sessions](#manual-sessions) · [Submission](#submission) · [Readings](#readings)
 
 ## First run
 
@@ -40,7 +40,7 @@ Use `run --case CASE_ID` for one case. With `eval` or `grade`, `--modes baseline
 | `README.md`, `docs/hwN.md`, `course.json` | Open the root README to find your handout. The `assignment` and `editable` fields in `course.json` give your assignment number and the exact source files to change. |
 | `labagent/` | Follow how a model proposes a call and how the application executes, denies, and evaluates it. The module map below gives the entry points. |
 | `security/` and `baseline/` | Implement the assigned functions in `security/`. Compare your results against the supplied vulnerable control in `baseline/`. |
-| `fixtures/`, `attacks/` | Inspect the synthetic world, tasks, and injection examples. Put your own copied attack cases in `attacks/`. Create this directory when adding your first case if needed. |
+| `inputs/`, `attacks/` | Inspect the synthetic world and the cases, including the injected documents in attack cases' `overrides`. Put your own copied attack cases in `attacks/`. Create this directory when adding your first case if needed. |
 | `tests/` and `tests/public/` | `test_smoke.py` checks startup and adapter behavior. `test_policy.py` calls the tools directly and checks their effects in SQLite. `test_boundaries.py` exercises controls directly with proposed actions. Add your tests as `tests/public/test_student_*.py`, starting from a copy of `tests/public/template_student_test.py`. |
 | `runs/` | Each evaluation creates a batch here by default. Use its traces and database to distinguish a proposed action from a committed effect. |
 | `submission/`, `scripts/submit.py`, `.starter/` | Write your memo, walkthrough, and reproduction instructions in `submission/`. The packager compares your implementations with the originals in `.starter/security/` and checks the hashes of the supplied scaffold. |
@@ -78,25 +78,24 @@ flowchart TD
 | [labagent/runner.py](../labagent/runner.py) | The lab's `Runner` owns a session's history and budget. Its `execute_tool()` checks the deadline, calls the dispatcher and admits the result into the conversation. |
 | [labagent/model.py](../labagent/model.py) | `OpenAIModel` configures the Chat Completions endpoint and credentials. `OpenAIChatCompletionsModel` calls `client.chat.completions.create()`. This module builds the SDK agent with local tools and calls `agents.Runner.run()`. `BoundedModel` reserves each request, records usage and validates the model's response. |
 | [labagent/utils.py](../labagent/utils.py) | Defines tool schemas, validates actions, and parses arguments with `strict_json()`. `function_tools()` registers the eight MCP definitions as local SDK callbacks. It also supplies `to_canonical_json_string()` for deterministic JSON and `to_hash_string()` for SHA-256 hashes of that JSON. |
-| [labagent/dispatcher.py](../labagent/dispatcher.py) | `Dispatcher.execute()` evaluates assignment policies and runs the fixture service. `emit()` records proposals, decisions, results and termination. |
+| [labagent/dispatcher.py](../labagent/dispatcher.py) | `Dispatcher.execute()` evaluates assignment policies and runs the tool's local service. `emit()` records proposals, decisions, results and termination. |
 | [labagent/policies.py](../labagent/policies.py) | Selects the security policy implementations for the assignment and mode. |
-| [labagent/limits.py](../labagent/limits.py) | Every numeric limit in one place: the assignment 6 policy limits copied into `runtime.limits`, the outer harness ceilings, size checks, and fixture rules such as the payment limit. |
+| [labagent/limits.py](../labagent/limits.py) | Every numeric limit in one place: the assignment 6 policy limits copied into `runtime.limits`, the outer harness ceilings, size checks, and lab rules such as the payment limit. |
 | [labagent/types.py](../labagent/types.py) | Defines the immutable task context, actions, decisions, runtime counters, clocks and shared errors. |
-| [labagent/store.py](../labagent/store.py) | Implements SQLite fixture lookups, local messages, approvals, memories and the simulated ledger transaction. |
+| [labagent/store.py](../labagent/store.py) | Implements SQLite lookups of the seeded lab data, local messages, approvals, memories and the simulated ledger transaction. |
 
 The registered tools are `read_doc` and `search_docs` for documents, `send_message` for the local outbox, `remember` and `recall` for memory, `propose_payment` and `commit_payment` for the simulated ledger workflow, and `unstable` for controlled faults. A tool can be registered while the current task or policy prohibits its use.
 
-## Fixtures and case inputs
+## Inputs
 
 | Input | How it is used |
 | --- | --- |
-| `fixtures/world.json` | `Store.seed()` loads three synthetic users, twelve public/internal documents, five recipients, two accounts, and three vendors. The stored tenant, project, role, and label data are authoritative for policy checks. |
-| `fixtures/cases.json` | The evaluator reads the cases shipped for your assignment. Each case defines the authenticated user, task, permissions, sessions, and scoring criteria. `--case-file PATH` selects a custom case object or list of cases. Older custom cases retain their task and user overrides. The model supplies every proposed action at run time. |
-| `fixtures/payloads.json` | The injected passages of the six assignment 1 attack cases, keyed by case ID. The document body actually used in a trial comes from the world's document plus any replacement in that case's `overrides`. |
-| `fixtures/incident_trace.json` | Supplied with assignment 6. This teaching capture used fixed HTTP responses at a test endpoint and the actual SDK and local tools. Examine the input, transcript, audit events, committed effects, and recovery result. |
+| `inputs/world.json` | `Store.seed()` loads three synthetic users, twelve public/internal documents, five recipients, two accounts, and three vendors. The stored tenant, project, role, and label data are authoritative for policy checks. |
+| `inputs/cases.json` | The evaluator reads the cases shipped for your assignment. Each case defines the authenticated user, task, permissions, sessions, and scoring criteria. An attack case's `overrides` field holds the attacker-controlled document bodies, which mix the injected instructions into otherwise ordinary document text. `--case-file PATH` selects a custom case object or list of cases. Older custom cases retain their task and user overrides. The model supplies every proposed action at run time. |
+| `inputs/incident_trace.json` | Supplied with assignment 6. This teaching capture used fixed HTTP responses at a test endpoint and the actual SDK and local tools. Examine the input, transcript, audit events, committed effects, and recovery result. |
 | `attacks/*.json` | Your custom inputs. Copy a full case, retain its ID and assignment number, and change the attacker-controlled field specified by the handout. |
 
-To read a case, begin with `user`, `task`, and `contract`. The contract lists allowed tools and exact recipients. `assignment`, `id`, and `kind` identify the experiment. `overrides` can replace a fixture document body with up to 1,500 characters. Some cases seed protected `confirmations`, an `approval`, or a `legacy` memory row. `sessions` defines the sequence of interactions and can supply a session-specific user or task. `goal` defines the attacker's success condition. `expect` defines checks for legitimate task completion. Preserve trusted identities, metadata, permissions, and grading criteria when designing attacks.
+To read a case, begin with `user`, `task`, and `contract`. The contract lists allowed tools and exact recipients. `assignment`, `id`, and `kind` identify the experiment. `overrides` can replace a lab document body with up to 1,500 characters. Some cases seed protected `confirmations`, an `approval`, or a `legacy` memory row. `sessions` defines the sequence of interactions and can supply a session-specific user or task. `goal` defines the attacker's success condition. `expect` defines checks for legitimate task completion. Preserve trusted identities, metadata, permissions, and grading criteria when designing attacks.
 
 For a custom attack, make the `attacks/` directory and save the copied case there. Use the case ID from your copy in place of `CASE_ID`.
 
@@ -104,7 +103,7 @@ For a custom attack, make the `attacks/` directory and save the copied case ther
 python3 -m labagent run --case CASE_ID --case-file attacks/my_case.json --mode student
 ```
 
-Changing an `overrides` body changes the document shown to the agent. Each entry in `sessions` starts a fresh conversation with optional `user` and `task` overrides. An empty object uses the case defaults. Sessions in a trial share the fixture database.
+Changing an `overrides` body changes the document shown to the agent. Each entry in `sessions` starts a fresh conversation with optional `user` and `task` overrides. An empty object uses the case defaults. Sessions in a trial share the lab database.
 
 ## Worked example
 
@@ -182,7 +181,7 @@ The frozen `Context` supplies `user_id`, `tenant_id`, `task_id`, `allowed_tools`
 
 Policy checks return a `Decision` using `allow(reason)` or `deny(reason)` from `labagent.types`. The dispatcher translates a denial into a tool result. Budget checks can raise `BudgetExceeded(reason)`. The trusted loop and dispatcher increment attempt and byte counters after the corresponding reservation or admission. Failed attempts count. Direct deadline tests advance a test clock. Agent sessions use elapsed monotonic time.
 
-`store.get(kind, id)` looks up authoritative objects. `store.rows(table)` reads stored records. For assignment 5, `store.atomic_commit(context, action, runtime, check)` detaches the request, obtains a SQLite write lock, and calls `check(context, action, runtime, approval, receipt)`. Either record can be absent. The callback decides whether the current action is authorized and matches the approval or receipt. The helper records a newly permitted effect and consumes its approval in one transaction, or returns the matching existing receipt. `payment_binding()` and `to_hash_string()` help compare the reviewed and requested actions. Service methods such as `put`, `record`, `approve`, and `confirm` are reserved for the trusted harness or operator. The agent processes turns sequentially. The assignment 5 tests additionally exercise concurrent calls to this transaction.
+`store.get(kind, id)` looks up authoritative objects. `store.rows(table)` reads stored records. For assignment 5, `store.atomic_commit(context, action, runtime, check)` detaches the request, obtains a SQLite write lock, and calls `check(context, action, runtime, approval, receipt)`. Either record can be absent. The callback decides whether the current action is authorized and matches the approval or receipt. The helper records a newly permitted effect and consumes its approval in one transaction, or returns the matching existing receipt. `payment_binding()` and `to_hash_string()` help compare the reviewed and requested actions. Service methods such as `put`, `record`, `approve`, and `confirm` are reserved for the trusted harness. The agent processes turns sequentially. The assignment 5 tests additionally exercise concurrent calls to this transaction.
 
 ## Outputs and evaluation
 
@@ -204,13 +203,13 @@ python3 -m labagent inspect --state runs/BATCH/TRIAL/state.sqlite --table outbox
 
 The inspection CLI also accepts `memories`, `proposals`, `approvals`, `ledger`, and `audit`. Rerunning a case creates a fresh trial. Sessions within a multi-session case share the trial database and start with fresh conversation history. Retrieval and memory access are checked on each lookup. There is no shared cache to clear during recovery.
 
-**Who records the metadata?** `labagent.evaluate.run_case()` writes the model ID, API, endpoint, configuration, trial index, fixture hash, initial-state hash, Python-source fingerprint, and dependency-lock hash. Each `session-N.json` has a `model_requests` list. `BoundedModel.get_response()` records the effective temperature, output-token cap, timeout in seconds, and provider-reported input/output tokens for each attempt. The trial row lists the caps used and sums the reported tokens. A missing count is `null` when no request reports it. `usage_unknown_calls` counts attempts missing either token count. In your reproduction README, record the command, including `--repeat`, and use environment variable names in place of credential values.
+**Who records the metadata?** `labagent.evaluate.run_case()` writes the model ID, API, endpoint, configuration, trial index, case hash (`fixture_hash`), initial-state hash, Python-source fingerprint, and dependency-lock hash. Each `session-N.json` has a `model_requests` list. `BoundedModel.get_response()` records the effective temperature, output-token cap, timeout in seconds, and provider-reported input/output tokens for each attempt. The trial row lists the caps used and sums the reported tokens. A missing count is `null` when no request reports it. `usage_unknown_calls` counts attempts missing either token count. In your reproduction README, record the command, including `--repeat`, and use environment variable names in place of credential values.
 
 **How to score a comparison.** Run the same cases and repetitions in each configuration. Report raw numerators and denominators alongside the rates. Attack success is completed attack trials meeting `goal` divided by completed attack trials. Benign completion is completed benign trials passing `expect` divided by completed benign trials. For completion under attack, include only attack cases with a defined task check. Infrastructure errors have their own count and are excluded from those denominators. Policy denials and budget stops count as completed trials. Inspect trusted state, context document IDs, and manually checkable answer facts when interpreting the scores. A small suite supports conclusions about the cases exercised.
 
 ## Live models and limits
 
-Choose a model that accepts native function tools at an OpenAI-compatible Chat Completions endpoint. For a course-hosted Qwen model, ask the course operator for its model ID, API root, and bearer API key. Use the API root exactly as supplied, including a prefix such as `/v1`. The client appends `/chat/completions`. With the environment from [First run](#first-run) active, configure the endpoint.
+Choose a model that accepts native function tools at an OpenAI-compatible Chat Completions endpoint. For a course-hosted Qwen model, ask the course instructor for its model ID, API root, and bearer API key. Use the API root exactly as supplied, including a prefix such as `/v1`. The client appends `/chat/completions`. With the environment from [First run](#first-run) active, configure the endpoint.
 
 ```bash
 export OPENAI_BASE_URL='https://your-endpoint.example/v1'
@@ -241,9 +240,58 @@ Each session starts with fresh request, tool, time, and output budgets. The harn
 
 For `provider_http_401` or `provider_http_403`, check the endpoint's bearer key and model access. For `provider_http_404`, check the API root and model ID. A `400` can indicate unsupported tools or decoding options. `provider_http_429` records one rate-limited attempt. Malformed arguments or multiple calls in one turn terminate that trial before tool execution. A missing SDK import means the live requirements need to be installed in the Python environment running the lab.
 
+## Optional Amazon Bedrock for LLM access
+
+**Follow the instructions given in class** for obtaining API keys and for which models to use. The course-provided setup is the default, and your results should be comparable with your classmates'. Use this section only if you are told to, or if you want your own access for extra experiments.
+
+### Create an AWS account
+
+New AWS accounts receive  \$100 in credits on sign-up (and can earn up to $100 more by completing introductory activities), valid for 6 months on the free plan. Sign up at [aws.amazon.com/free](https://aws.amazon.com/free/). You need:
+
+- an email address that has never been used for an AWS account (accounts that previously had AWS access are not eligible for the credits);
+- a phone number for verification;
+- possibly a payment card: most new customers do not need one, but AWS may ask for it to verify your identity.
+
+After signing up, open [Billing and Cost Management → Budgets](https://console.aws.amazon.com/billing/home#/budgets) and create a budget alert (for example, $10) so you notice any unexpected use. A full assignment 1 evaluation is a few hundred short requests. If Bedrock requests are refused on the free plan, check the plan's service list before upgrading: a paid plan charges your card once the credits are used up.
+
+### Create an Amazon Bedrock API key
+
+1. Sign in to the [AWS console](https://console.aws.amazon.com/) and select the **US East (N. Virginia) us-east-1** Region in the top-right Region menu. Bedrock API keys work only in the Region where you generate them.
+2. Open the [Amazon Bedrock console](https://console.aws.amazon.com/bedrock) and choose **API keys** in the left menu.
+3. Choose one of the two key types:
+   - **Short-term API keys → Generate short-term API keys** (recommended). The key lasts at most 12 hours, or until your console session ends. Generate a fresh one for each working session.
+   - **Long-term API keys → Generate long-term API keys**. Choose the shortest expiration that covers your work, never "never expires", and choose **Generate**. AWS recommends long-term keys only for exploration.
+4. Copy the key when it is shown. AWS does not show it again.
+
+See the AWS guide [Amazon Bedrock API keys](https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys.html) for details.
+
+### Configure the lab
+
+We recommend the `qwen.qwen3-32b-v1:0` model at the `https://bedrock-mantle.us-east-1.api.aws/v1` endpoint:
+
+```bash
+export OPENAI_BASE_URL='https://bedrock-mantle.us-east-1.api.aws/v1'
+export OPENAI_MODEL='qwen.qwen3-32b-v1:0'
+read -rs OPENAI_API_KEY && export OPENAI_API_KEY   # paste the key; it is not echoed or saved in shell history
+python -m labagent run --case summary --mode student
+```
+
+If the endpoint answers that the model is not supported on this route (an HTTP `400` or `404`), try `OPENAI_MODEL='qwen.qwen3-32b'`, the ID the Bedrock documentation lists for the `bedrock-mantle` endpoint. A `401` or `403` usually means the key expired, was generated in another Region, or the model is not enabled for your account.
+
+### Keep your API key safe
+
+An API key is a password that spends your money. Anyone who has it can run requests billed to your account.
+
+- **Never share it.** Do not send it by email, chat, Slack, or the course forum, and do not show it in screenshots or recordings. Instructors and TAs never need your key.
+- **Never commit it.** Do not write it into source code, case files, `attacks/`, notebooks, or any file tracked by Git, and never push it to GitHub. Public repositories are scanned for keys within minutes. If you keep it in a file, use `.env` (already listed in `.gitignore`) and load it with `set -a; source .env; set +a`.
+- **Never submit it.** It must not appear in `submission/`, your memo, `exploit.md`, or your reproduction instructions; write "set `OPENAI_API_KEY` to your key" instead. `scripts/submit.py` skips environment files, but you are responsible for everything else you add. The harness records the endpoint and model ID in traces, never the key.
+- **Avoid `--api-key` on the command line.** It ends up in shell history and is visible in the process list; use the environment variable.
+- **If a key leaks, revoke it immediately:** delete or deactivate it in the Bedrock console under **API keys**, then generate a new one. For a short-term key, sign out of the console session that generated it.
+- **Clean up at the end of the course:** delete long-term keys you no longer need.
+
 ## Manual sessions
 
-For a persistent exercise, initialize a new state file. `chat` takes the simulated user, task, permitted tools, and optional `--recipients` from the operator CLI. It prints the final answer, stop reason, error, and run ID, and keeps audit records and service effects in the named database.
+For a persistent exercise, initialize a new state file. `chat` takes the simulated user, task, permitted tools, and optional `--recipients` from the CLI. It prints the final answer, stop reason, error, and run ID, and keeps audit records and service effects in the named database.
 
 ```bash
 python3 -m labagent init --state manual.sqlite
@@ -254,7 +302,7 @@ python3 -m labagent inspect --state manual.sqlite --table audit
 `chat` sends your task to the configured model. Use `run` to execute a published case in a fresh database. All documents, addresses, and transactions in the local services are synthetic.
 
 - **Memory, assignment 4.** `python3 -m labagent confirm --state manual.sqlite --user alice --key answer_style --value bullets` creates a protected confirmation handle. Use it for that exact key and value. `python3 -m labagent quarantine --state manual.sqlite --memory-id MEMORY_ID` removes the selected record from active use while retaining its evidence.
-- **Payment review, assignment 5.** Use `chat` as `fin` with `--allow-tools read_doc,propose_payment,commit_payment` to request a fixture payment proposal. Inspect the `proposals` table for its ID. Run `python3 -m labagent review --state manual.sqlite --user fin --proposal PROPOSAL_ID` to display the proposal and document. Add `--approve` to issue approval for the reviewed action. Pass the returned approval ID with the same semantic arguments in a later authorized commit. The review binds document content and version and expires after five minutes. Omitting `--approve` performs inspection only. Manual approval expiry uses wall-clock time across processes. Direct approval tests can advance the test clock.
+- **Payment review, assignment 5.** Use `chat` as `fin` with `--allow-tools read_doc,propose_payment,commit_payment` to request a simulated payment proposal. Inspect the `proposals` table for its ID. Run `python3 -m labagent review --state manual.sqlite --user fin --proposal PROPOSAL_ID` to display the proposal and document. Add `--approve` to issue approval for the reviewed action. Pass the returned approval ID with the same semantic arguments in a later authorized commit. The review binds document content and version and expires after five minutes. Omitting `--approve` performs inspection only. Manual approval expiry uses wall-clock time across processes. Direct approval tests can advance the test clock.
 
 ## Submission
 

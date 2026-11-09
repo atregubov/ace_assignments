@@ -30,8 +30,8 @@ class ExampleTests(unittest.TestCase):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         self.store = Store(Path(directory.name) / "state.sqlite")
-        self.store.seed()  # loads fixtures/world.json
-        # Trusted identity and task contract: in a real run these come from the case fixture.
+        self.store.seed()  # loads inputs/world.json
+        # Trusted identity and task contract: in a real run these come from the case definition.
         self.context = Context(user_id="alice", tenant_id="A", task_id="example",
                                allowed_tools=("read_doc", "send_message"),
                                allowed_recipients=("team-a@spherelab.test",))

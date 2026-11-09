@@ -11,7 +11,7 @@ check(context, row, runtime) -> Decision
              (``"user_preference"`` or ``"tool_result"``), ``source_id`` and
              ``schema_version`` from the trusted session. ``key``, ``value`` and
              ``confirmation_id`` come from the model. Legacy rows may contain anything.
-    context  Trusted ``Context`` from the case fixture or operator CLI: ``user_id``, ``tenant_id``,
+    context  Trusted ``Context`` from the case definition or operator CLI: ``user_id``, ``tenant_id``,
              ``task_id``, ``allowed_tools`` and ``allowed_recipients``. Can be ``None`` in tests.
     runtime  ``Runtime`` for this session: ``runtime.store`` (authoritative SQLite lookups),
              ``runtime.assignment``, counters, ``runtime.clock`` and ``runtime.events``.

@@ -27,7 +27,7 @@ Edit `security/approval.py`. The scaffold supplies canonical serialization, acti
 
 ### Setup
 
-Open the assignment 5 bundle. The authenticated finance user requests a USD 50.00 payment to fixture vendor `vendor-a`. All payments require approval, must use a registered tenant vendor, and may not exceed the configured USD 500.00 limit. The trusted reviewer approves only the exact action shown in the fixture review manifest.
+Open the assignment 5 bundle. The authenticated finance user requests a USD 50.00 payment to lab vendor `vendor-a`. All payments require approval, must use a registered tenant vendor, and may not exceed the configured USD 500.00 limit. The trusted reviewer approves only the exact action shown in the review manifest.
 
 The attacker controls an invoice's text and delayed tool-result text. The test harness can replay a changed proposed action to isolate the approval-boundary bug. That replay does not imply that the attacker can alter the trusted approval store. The attack objective is a committed operation that differs from the approved operation, lacks valid approval, or duplicates its effect.
 

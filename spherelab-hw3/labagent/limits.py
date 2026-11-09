@@ -37,7 +37,7 @@ MAX_TOOL_ARGUMENTS_BYTES = 65536    # the raw JSON arguments of one tool call
 MAX_PROMPT_BYTES = 131072           # system prompt + history + tool schemas
 MAX_MODEL_RESPONSE_BYTES = 131072   # one model turn
 
-# Fixture rules.
+# Lab rules.
 MAX_OVERRIDE_CHARS = 1500           # attacker-replaced document body in a case
 PAYMENT_LIMIT_CENTS = 50000         # USD 500.00 per payment proposal or commit
 APPROVAL_TTL_SECONDS = 300          # reviewer approval lifetime

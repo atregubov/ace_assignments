@@ -1,4 +1,4 @@
-"""The single path from a model's proposed tool call to fixture state.
+"""The single path from a model's proposed tool call to lab state.
 
 ``Dispatcher.execute()`` records the proposal, reserves tool budget, validates the arguments,
 and asks the active policies before any local service runs. A policy denial becomes an error
@@ -170,4 +170,4 @@ class Dispatcher:
             return {"body": "late read-only result"}
         if mode == "normal":
             return {"body": "service healthy"}
-        raise PolicyDenied("unknown_fault_fixture")
+        raise PolicyDenied("unknown_fault_mode")

@@ -5,7 +5,7 @@ check(context, action, runtime) -> Decision
     before the tool runs, including on retries. The policy table in the handout is
     conjunctive: deny unless every applicable rule allows.
 
-    context  Trusted ``Context`` from the case fixture or operator CLI: ``user_id``, ``tenant_id``,
+    context  Trusted ``Context`` from the case definition or operator CLI: ``user_id``, ``tenant_id``,
              ``task_id``, ``allowed_tools`` and ``allowed_recipients``. Can be ``None`` in tests.
     action   Untrusted ``Action`` proposed by the model: ``action.tool`` (str) and ``action.args``
              (dict, already schema-checked). Treat every argument as attacker-controlled.
@@ -19,7 +19,7 @@ Trusted lookups: ``runtime.store.get(kind, id)`` returns a dict or ``None``.
     docs        {"id", "tenant", "project", "label": "PUBLIC"|"INTERNAL", "title", "body", "version"}
     recipients  {"id", "tenant", "projects": [...], "external": bool}
     accounts    {"id", "tenant"}          vendors  {"id", "tenant"}
-See fixtures/world.json for every record.
+See inputs/world.json for every record.
 Read records at check time; a role or project removed a moment ago must already be denied.
 ``labagent.limits.PAYMENT_LIMIT_CENTS`` is the configured proposal limit. Remember that
 ``bool`` is a subclass of ``int`` in Python.

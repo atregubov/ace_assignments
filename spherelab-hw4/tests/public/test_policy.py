@@ -1,4 +1,4 @@
-"""Check visible policy effects directly against fixture state, without calling a model."""
+"""Check visible policy effects directly against seeded lab state, without calling a model."""
 import json
 import os
 from pathlib import Path

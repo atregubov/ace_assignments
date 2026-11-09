@@ -38,7 +38,7 @@ def session_inputs(case):
 
 def cases(assignment=None, *, path=None):
     """Load the bundled suite or a custom case file, optionally filtering by assignment."""
-    source = Path(path) if path is not None else ROOT / "fixtures/cases.json"
+    source = Path(path) if path is not None else ROOT / "inputs/cases.json"
     data = json.loads(source.read_text())
     if isinstance(data, dict):
         data = [data]
@@ -62,7 +62,7 @@ def cases(assignment=None, *, path=None):
 def context_for(store, case, user=None, task_id=None):
     identity = store.get("users", user or case["user"])
     if not identity:
-        raise ValueError("Unknown fixture user")
+        raise ValueError("Unknown lab user")
     return Context(identity["id"], identity["tenant"], task_id or case["id"],
                    tuple(case["contract"]["tools"]), tuple(case["contract"]["recipients"]))
 

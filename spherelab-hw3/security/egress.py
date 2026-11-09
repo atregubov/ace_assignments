@@ -6,7 +6,7 @@ check(context, action, runtime) -> Decision
     (``runtime.internal_projects``, filled by ``retrieval.observe``), never from the body text
     or from anything the model says about it.
 
-    context  Trusted ``Context`` from the case fixture or operator CLI: ``user_id``, ``tenant_id``,
+    context  Trusted ``Context`` from the case definition or operator CLI: ``user_id``, ``tenant_id``,
              ``task_id``, ``allowed_tools`` and ``allowed_recipients``. Can be ``None`` in tests.
     action   Untrusted ``Action`` proposed by the model: ``action.tool`` (str) and ``action.args``
              (dict, already schema-checked). Treat every argument as attacker-controlled.
@@ -18,7 +18,7 @@ Trusted lookups: ``runtime.store.get(kind, id)`` returns a dict or ``None``.
     docs        {"id", "tenant", "project", "label": "PUBLIC"|"INTERNAL", "title", "body", "version"}
     recipients  {"id", "tenant", "projects": [...], "external": bool}
     accounts    {"id", "tenant"}          vendors  {"id", "tenant"}
-See fixtures/world.json for every record.
+See inputs/world.json for every record.
 The run label is monotonic: once internal material has been read, it stays internal for the
 rest of the run.
 
